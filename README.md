@@ -59,10 +59,3 @@ On first successful login, legacy seeded passwords are upgraded automatically to
 ```bash
 npm test
 ```
-
-## Recommended next steps
-
-1. Add explorer-style transaction and contract views in the UI.
-2. Add audit logging for admin actions and vote events.
-3. Add integration tests for the API routes with a test database and blockchain assertions.
-4. Add rate limiting, CSRF protection, and deployment configuration.
