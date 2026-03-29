@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Results | Blockchain Transparent Voting System</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body data-page="results">
+    <div class="app-shell">
+      <header class="navbar">
+        <div class="container nav-inner">
+          <a class="brand" href="dashboard.html">
+            <span class="brand-mark">BV</span>
+            <span>Blockchain Voting System</span>
+          </a>
+          <div class="nav-meta">
+            <nav class="nav-links">
+              <a href="dashboard.html" data-nav="dashboard">Home</a>
+              <a href="voting.html" data-nav="vote">Vote</a>
+              <a href="results.html" data-nav="results">Results</a>
+              <a href="admin.html" data-nav="admin" data-admin-link>Admin</a>
+            </nav>
+            <div class="button-row">
+              <span class="tag" data-session-user>Guest</span>
+              <button class="ghost-btn" type="button" data-logout-btn hidden>Logout</button>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <main class="container page">
+        <section class="hero">
+          <span class="tag">Election Results</span>
+          <h1>Transparent result summary</h1>
+          <p data-results-title>Current election</p>
+        </section>
+
+        <div class="message warning" data-results-message hidden>Results are currently unavailable.</div>
+
+        <section class="results-grid">
+          <div class="panel">
+            <div class="section-head">
+              <h2>Candidate Votes</h2>
+              <p>Readable vote breakdown for project demonstration.</p>
+            </div>
+            <div class="results-list" data-results-list></div>
+          </div>
+
+          <div class="panel">
+            <div class="section-head">
+              <h2>Total Participation</h2>
+              <p>Summary of all ballots counted in the current election.</p>
+            </div>
+            <div class="metric-card">
+              <span>Total Votes</span>
+              <strong data-total-votes>0</strong>
+            </div>
+            <div class="note-box">
+              Result visibility helps demonstrate the transparency objective of the blockchain-based voting system.
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <script src="app.js"></script>
+  </body>
+</html>

@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Vote | Blockchain Transparent Voting System</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body data-page="vote">
+    <div class="app-shell">
+      <header class="navbar">
+        <div class="container nav-inner">
+          <a class="brand" href="dashboard.html">
+            <span class="brand-mark">BV</span>
+            <span>Blockchain Voting System</span>
+          </a>
+          <div class="nav-meta">
+            <nav class="nav-links">
+              <a href="dashboard.html" data-nav="dashboard">Home</a>
+              <a href="voting.html" data-nav="vote">Vote</a>
+              <a href="results.html" data-nav="results">Results</a>
+              <a href="admin.html" data-nav="admin" data-admin-link>Admin</a>
+            </nav>
+            <div class="button-row">
+              <span class="tag" data-session-user>Guest</span>
+              <button class="ghost-btn" type="button" data-logout-btn hidden>Logout</button>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <main class="container page">
+        <section class="hero">
+          <span class="tag">Voting Page</span>
+          <h1>Cast a secure digital ballot</h1>
+          <p data-election-state>Voting is currently open.</p>
+        </section>
+
+        <section class="actions">
+          <div class="message warning" data-vote-banner>Select one candidate to cast your vote.</div>
+          <div class="transaction-box">
+            <strong>Transaction Hash</strong>
+            <p class="muted" data-hash>Transaction hash will appear here after the vote is recorded.</p>
+          </div>
+        </section>
+
+        <section class="candidate-grid" data-candidate-list></section>
+      </main>
+    </div>
+
+    <script src="app.js"></script>
+  </body>
+</html>

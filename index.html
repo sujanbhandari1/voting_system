@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Login | Blockchain Transparent Voting System</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body data-page="login">
+    <div class="app-shell">
+      <header class="navbar">
+        <div class="container nav-inner">
+          <a class="brand" href="index.html">
+            <span class="brand-mark">BV</span>
+            <span>Blockchain Voting System</span>
+          </a>
+          <div class="nav-meta">
+            <nav class="nav-links">
+              <a href="index.html" data-nav="home">Home</a>
+              <a href="voting.html" data-nav="vote">Vote</a>
+              <a href="results.html" data-nav="results">Results</a>
+              <a href="admin.html" data-nav="admin" data-admin-link>Admin</a>
+            </nav>
+            <div class="button-row">
+              <span class="tag" data-session-user>Guest</span>
+              <button class="ghost-btn" type="button" data-logout-btn hidden>Logout</button>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <main class="container form-page">
+        <section class="form-card">
+          <div class="form-stack">
+            <span class="tag">College Final Year Project</span>
+            <h1>Secure and transparent student voting</h1>
+            <p class="form-hint">
+              Login to access the blockchain-based election dashboard and cast your vote after approval.
+            </p>
+          </div>
+
+          <form class="form-stack" data-login-form>
+            <div class="input-stack">
+              <label>
+                Email
+                <input type="email" name="email" placeholder="student@college.edu" required />
+              </label>
+              <label>
+                Password
+                <input type="password" name="password" placeholder="Enter your password" required />
+              </label>
+            </div>
+
+            <button class="primary-btn" type="submit">Login</button>
+          </form>
+
+          <div class="message error" data-login-message hidden>Login failed.</div>
+
+          <div class="note-box">
+            <strong>Demo Credentials</strong>
+            <p class="muted">Admin: `admin@college.edu` / `admin123`</p>
+            <p class="muted">Student: `student@college.edu` / `student123`</p>
+          </div>
+
+          <p class="muted">
+            New voter?
+            <a class="inline-link" href="register.html">Create an account</a>
+          </p>
+        </section>
+      </main>
+    </div>
+
+    <script src="app.js"></script>
+  </body>
+</html>

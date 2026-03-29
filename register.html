@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Register | Blockchain Transparent Voting System</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body data-page="register">
+    <div class="app-shell">
+      <header class="navbar">
+        <div class="container nav-inner">
+          <a class="brand" href="index.html">
+            <span class="brand-mark">BV</span>
+            <span>Blockchain Voting System</span>
+          </a>
+          <div class="nav-meta">
+            <nav class="nav-links">
+              <a href="index.html" data-nav="home">Home</a>
+              <a href="voting.html" data-nav="vote">Vote</a>
+              <a href="results.html" data-nav="results">Results</a>
+              <a href="admin.html" data-nav="admin" data-admin-link>Admin</a>
+            </nav>
+            <div class="button-row">
+              <span class="tag" data-session-user>Guest</span>
+              <button class="ghost-btn" type="button" data-logout-btn hidden>Logout</button>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <main class="container form-page">
+        <section class="form-card">
+          <div class="form-stack">
+            <span class="tag">Voter Registration</span>
+            <h1>Create your account</h1>
+            <p class="form-hint">Register once, then wait for admin approval before accessing the ballot.</p>
+          </div>
+
+          <form class="form-stack" data-register-form>
+            <div class="input-stack">
+              <label>
+                Full Name
+                <input type="text" name="name" placeholder="Enter your full name" required />
+              </label>
+              <label>
+                Email
+                <input type="email" name="email" placeholder="student@college.edu" required />
+              </label>
+              <label>
+                Password
+                <input type="password" name="password" placeholder="Create a password" required />
+              </label>
+            </div>
+
+            <button class="primary-btn" type="submit">Register</button>
+          </form>
+
+          <div class="message warning" data-register-message>
+            Wait for admin approval after registration
+          </div>
+
+          <p class="muted">
+            Already registered?
+            <a class="inline-link" href="index.html">Login here</a>
+          </p>
+        </section>
+      </main>
+    </div>
+
+    <script src="app.js"></script>
+  </body>
+</html>

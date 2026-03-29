@@ -1,0 +1,17 @@
+{
+  "name": "blockchain-voting-system",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Simple backend and frontend prototype for a blockchain-based transparent voting system",
+  "scripts": {
+    "start": "node server.js",
+    "test": "node --test"
+  },
+  "dependencies": {
+    "docx": "^9.6.1",
+    "ethers": "^6.16.0",
+    "ganache": "^7.9.2",
+    "mongodb": "^6.17.0",
+    "solc": "^0.8.34"
+  }
+}

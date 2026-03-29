@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Dashboard | Blockchain Transparent Voting System</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body data-page="dashboard">
+    <div class="app-shell">
+      <header class="navbar">
+        <div class="container nav-inner">
+          <a class="brand" href="dashboard.html">
+            <span class="brand-mark">BV</span>
+            <span>Blockchain Voting System</span>
+          </a>
+          <div class="nav-meta">
+            <nav class="nav-links">
+              <a href="dashboard.html" data-nav="dashboard">Home</a>
+              <a href="voting.html" data-nav="vote">Vote</a>
+              <a href="results.html" data-nav="results">Results</a>
+              <a href="admin.html" data-nav="admin" data-admin-link>Admin</a>
+            </nav>
+            <div class="button-row">
+              <span class="tag" data-session-user>Guest</span>
+              <button class="ghost-btn" type="button" data-logout-btn hidden>Logout</button>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <main class="container page">
+        <section class="hero">
+          <span class="tag">User Dashboard</span>
+          <div class="hero-grid">
+            <div class="panel hero-card">
+              <h1 data-welcome>Welcome</h1>
+              <p class="status-copy">
+                Monitor your approval status, access the current election, and review transparent voting results.
+              </p>
+              <div class="status-block">
+                <span class="muted">Account Status</span>
+                <span class="status-pill" data-user-status>Pending Approval</span>
+              </div>
+              <div class="button-row">
+                <a class="button primary-btn" href="voting.html" data-vote-action>Go to Vote</a>
+                <a class="button secondary-btn" href="results.html" data-results-action>View Results</a>
+              </div>
+            </div>
+
+            <div class="panel">
+              <div class="section-head">
+                <h2>Election Overview</h2>
+                <p data-election-title>Current election title</p>
+              </div>
+              <div class="hero-points">
+                <div>
+                  <strong>Transparent Ledger</strong>
+                  <p class="muted">Each vote is intended to be recorded with a verifiable blockchain transaction reference.</p>
+                </div>
+                <div>
+                  <strong>Approval-Based Access</strong>
+                  <p class="muted">Only approved students can enter the voting page and submit a ballot.</p>
+                </div>
+                <div>
+                  <strong>Simple Demo Flow</strong>
+                  <p class="muted">Designed for a clean academic presentation with clear actions and readable results.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="metrics">
+          <article class="metric-card">
+            <span>Election Status</span>
+            <strong data-vote-status>Open</strong>
+          </article>
+          <article class="metric-card">
+            <span>Total Candidates</span>
+            <strong data-total-candidates>0</strong>
+          </article>
+          <article class="metric-card">
+            <span>Total Votes</span>
+            <strong data-total-votes>0</strong>
+          </article>
+        </section>
+      </main>
+    </div>
+
+    <script src="app.js"></script>
+  </body>
+</html>
