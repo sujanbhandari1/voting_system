@@ -3,9 +3,9 @@ const fs = require("fs");
 const path = require("path");
 const { URL } = require("url");
 const { MongoClient } = require("mongodb");
+const jwt = require("jsonwebtoken");
 const blockchain = require("./lib/blockchain");
 const {
-  generateSessionId,
   hashPassword,
   verifyPassword
 } = require("./lib/auth");
@@ -23,6 +23,8 @@ const ROOT = __dirname;
 const MONGODB_URI = process.env.MONGODB_URI || "mongodb://127.0.0.1:27017";
 const DB_NAME = process.env.MONGODB_DB || "blockchain_voting_system";
 const SESSION_TTL_MS = 1000 * 60 * 60 * 24 * 7;
+const JWT_COOKIE_NAME = "btvs_jwt";
+const JWT_SECRET = process.env.JWT_SECRET || "dev-secret-change-me";
 
 let mongoClient;
 let database;
@@ -63,9 +65,27 @@ function seedElection() {
     active: true,
     resultsVisibleToVoters: true,
     candidates: [
-      { candidateId: 1, name: "Aarushi Sharma", party: "Progressive Student Union", votes: 142 },
-      { candidateId: 2, name: "Rohan Karki", party: "Campus Reform Group", votes: 118 },
-      { candidateId: 3, name: "Sanjana Thapa", party: "Independent", votes: 96 }
+      {
+        candidateId: 1,
+        name: "Aarushi Sharma",
+        party: "Progressive Student Union",
+        agenda: ["Improve library hours", "Expand student scholarships", "Transparent budget reporting"],
+        votes: 142
+      },
+      {
+        candidateId: 2,
+        name: "Rohan Karki",
+        party: "Campus Reform Group",
+        agenda: ["Better campus Wi‑Fi coverage", "More internship partnerships", "Simplify club funding process"],
+        votes: 118
+      },
+      {
+        candidateId: 3,
+        name: "Sanjana Thapa",
+        party: "Independent",
+        agenda: ["Mental health support programs", "Safer campus transport", "More student feedback sessions"],
+        votes: 96
+      }
     ],
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString()
@@ -80,9 +100,9 @@ function sendJson(response, statusCode, payload, headers = {}) {
   response.end(JSON.stringify(payload));
 }
 
-function sessionCookie(sessionId) {
+function authCookie(token) {
   const parts = [
-    `btvs_sid=${sessionId}`,
+    `${JWT_COOKIE_NAME}=${token}`,
     "HttpOnly",
     "Path=/",
     "SameSite=Lax",
@@ -96,14 +116,30 @@ function sessionCookie(sessionId) {
   return parts.join("; ");
 }
 
-function clearSessionCookie() {
-  const parts = ["btvs_sid=", "HttpOnly", "Path=/", "SameSite=Lax", "Max-Age=0"];
+function clearAuthCookie() {
+  const parts = [`${JWT_COOKIE_NAME}=`, "HttpOnly", "Path=/", "SameSite=Lax", "Max-Age=0"];
 
   if (process.env.NODE_ENV === "production") {
     parts.push("Secure");
   }
 
   return parts.join("; ");
+}
+
+function signAuthToken(user) {
+  return jwt.sign(
+    { sub: String(user.userId), role: user.role, status: user.status },
+    JWT_SECRET,
+    { expiresIn: Math.floor(SESSION_TTL_MS / 1000) }
+  );
+}
+
+function verifyAuthToken(token) {
+  try {
+    return jwt.verify(token, JWT_SECRET);
+  } catch {
+    return null;
+  }
 }
 
 function sendFile(response, filePath) {
@@ -161,6 +197,7 @@ function publicElection(election) {
       id: candidate.candidateId,
       name: candidate.name,
       party: candidate.party,
+      agenda: Array.isArray(candidate.agenda) ? candidate.agenda : [],
       votes: candidate.votes
     }))
   };
@@ -199,19 +236,16 @@ async function getCollections() {
   return {
     users: database.collection("users"),
     elections: database.collection("elections"),
-    votes: database.collection("votes"),
-    sessions: database.collection("sessions")
+    votes: database.collection("votes")
   };
 }
 
 async function ensureIndexes() {
-  const { users, elections, votes, sessions } = await getCollections();
+  const { users, elections, votes } = await getCollections();
   await users.createIndex({ userId: 1 }, { unique: true });
   await users.createIndex({ email: 1 }, { unique: true });
   await elections.createIndex({ electionId: 1 }, { unique: true });
   await votes.createIndex({ electionId: 1, userId: 1 }, { unique: true });
-  await sessions.createIndex({ sessionId: 1 }, { unique: true });
-  await sessions.createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0 });
 }
 
 async function ensureSeedData() {
@@ -237,12 +271,22 @@ async function getElectionView() {
   const contractInfo = await blockchain.getContractInfo();
 
   if (chainState.candidates.length > 0) {
+    const agendaByCandidateId = new Map(
+      (election?.candidates || []).map((candidate) => [
+        candidate.candidateId,
+        Array.isArray(candidate.agenda) ? candidate.agenda : []
+      ])
+    );
+
     return {
       electionId: election?.electionId || 1,
       title: chainState.title,
       active: chainState.active,
       resultsVisibleToVoters: election?.resultsVisibleToVoters ?? true,
-      candidates: chainState.candidates,
+      candidates: chainState.candidates.map((candidate) => ({
+        ...candidate,
+        agenda: agendaByCandidateId.get(candidate.candidateId) || []
+      })),
       contractAddress: contractInfo.address,
       chainId: contractInfo.chainId,
       network: contractInfo.network
@@ -259,18 +303,19 @@ async function getElectionView() {
 
 async function getCurrentUser(request) {
   const cookies = parseCookies(request);
-  const sessionId = cookies.btvs_sid;
-  if (!sessionId) {
+  const token = cookies[JWT_COOKIE_NAME];
+  if (!token) {
     return null;
   }
 
-  const { users, sessions } = await getCollections();
-  const session = await sessions.findOne({ sessionId, expiresAt: { $gt: new Date() } });
-  if (!session) {
+  const payload = verifyAuthToken(token);
+  const userId = Number(payload?.sub);
+  if (!Number.isFinite(userId)) {
     return null;
   }
 
-  return users.findOne({ userId: session.userId });
+  const { users } = await getCollections();
+  return users.findOne({ userId });
 }
 
 function requireUser(response, user) {
@@ -356,7 +401,7 @@ async function handleRequest(request, response) {
       const body = await readBody(request);
       const { email, password } = validateLoginInput(body);
 
-      const { users, sessions } = await getCollections();
+      const { users } = await getCollections();
       const user = await users.findOne({ email });
       if (!user || !verifyPassword(password, user.passwordHash)) {
         sendJson(response, 401, { error: "Invalid email or password." });
@@ -367,19 +412,13 @@ async function handleRequest(request, response) {
         await users.updateOne({ userId: user.userId }, { $set: { passwordHash: hashPassword(password) } });
       }
 
-      const sessionId = generateSessionId();
-      await sessions.insertOne({
-        sessionId,
-        userId: user.userId,
-        createdAt: new Date().toISOString(),
-        expiresAt: new Date(Date.now() + SESSION_TTL_MS)
-      });
+      const token = signAuthToken(user);
       sendJson(
         response,
         200,
         { user: publicUser(user) },
         {
-          "Set-Cookie": sessionCookie(sessionId)
+          "Set-Cookie": authCookie(token)
         }
       );
     } catch (error) {
@@ -389,17 +428,12 @@ async function handleRequest(request, response) {
   }
 
   if (request.method === "POST" && pathname === "/api/logout") {
-    const cookies = parseCookies(request);
-    if (cookies.btvs_sid) {
-      const { sessions } = await getCollections();
-      await sessions.deleteOne({ sessionId: cookies.btvs_sid });
-    }
     sendJson(
       response,
       200,
       { message: "Logged out successfully." },
       {
-        "Set-Cookie": clearSessionCookie()
+        "Set-Cookie": clearAuthCookie()
       }
     );
     return;

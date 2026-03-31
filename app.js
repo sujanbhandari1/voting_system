@@ -29,7 +29,7 @@ async function api(path, options = {}) {
 
 function setActiveNav() {
   const rawPage = document.body.dataset.page;
-  const currentPage = rawPage === "login" || rawPage === "register" ? "home" : rawPage;
+  const currentPage = rawPage === "login" || rawPage === "register" ? "dashboard" : rawPage;
   document.querySelectorAll("[data-nav]").forEach((link) => {
     if (link.dataset.nav === currentPage) {
       link.classList.add("active");
@@ -146,6 +146,10 @@ function renderDashboard(data) {
 }
 
 function candidateCard(candidate, disabled) {
+  const agenda = Array.isArray(candidate.agenda) ? candidate.agenda : [];
+  const agendaPreview = agenda.slice(0, 5);
+  const remainingAgenda = Math.max(agenda.length - agendaPreview.length, 0);
+
   return `
     <article class="card">
       <div class="card-header">
@@ -154,6 +158,17 @@ function candidateCard(candidate, disabled) {
           <p class="party">${candidate.party || "Independent"}</p>
         </div>
         <span class="tag">Candidate</span>
+      </div>
+      <div class="agenda-block">
+        <strong class="agenda-title">Agenda</strong>
+        ${
+          agenda.length
+            ? `<ul class="agenda-list">
+                ${agendaPreview.map((point) => `<li>${point}</li>`).join("")}
+                ${remainingAgenda ? `<li class="agenda-more">+ ${remainingAgenda} more</li>` : ""}
+              </ul>`
+            : `<p class="muted agenda-empty">No agenda points provided.</p>`
+        }
       </div>
       <div class="vote-state">
         <p class="muted">Blockchain transaction recording can be demonstrated after the ballot is submitted.</p>
@@ -383,6 +398,15 @@ function renderCandidateBuilder() {
           <div>
             <strong>${candidate.name}</strong>
             <p class="muted">${candidate.party || "Independent"}</p>
+            ${
+              candidate.agenda && candidate.agenda.length
+                ? `
+                  <ul class="agenda-preview">
+                    ${candidate.agenda.slice(0, 3).map((point) => `<li>${point}</li>`).join("")}
+                  </ul>
+                `
+                : `<p class="muted agenda-empty">No agenda points provided.</p>`
+            }
           </div>
           <button class="danger-btn" type="button" data-remove-candidate="${index}">Remove</button>
         </div>
@@ -395,11 +419,15 @@ function resetCandidateBuilder() {
   sessionState.adminCandidates = [];
   const nameInput = document.querySelector("[data-candidate-name-input]");
   const partyInput = document.querySelector("[data-candidate-party-input]");
+  const agendaInput = document.querySelector("[data-candidate-agenda-input]");
   if (nameInput) {
     nameInput.value = "";
   }
   if (partyInput) {
     partyInput.value = "";
+  }
+  if (agendaInput) {
+    agendaInput.value = "";
   }
   renderCandidateBuilder();
 }
@@ -408,13 +436,28 @@ function normalizeCandidateName(name) {
   return name.trim().toLowerCase().replace(/\s+/g, " ");
 }
 
-function validateCandidateInput(name, party) {
+function parseAgendaInput(rawAgenda) {
+  return String(rawAgenda || "")
+    .split("\n")
+    .map((line) => line.replace(/^\s*[-•]\s*/, "").trim())
+    .filter(Boolean);
+}
+
+function validateCandidateInput(name, party, agenda) {
   if (name.length < 2 || name.length > 80) {
     return "Candidate name must be between 2 and 80 characters.";
   }
 
   if (party.length > 80) {
     return "Party or group name must be 80 characters or fewer.";
+  }
+
+  if (agenda.length > 10) {
+    return "Candidate agenda must include 10 points or fewer.";
+  }
+
+  if (agenda.some((point) => point.length > 140)) {
+    return "Each agenda point must be 140 characters or fewer.";
   }
 
   const duplicate = sessionState.adminCandidates.some(
@@ -458,6 +501,7 @@ function attachAdmin() {
   const candidateList = document.querySelector("[data-candidate-admin-list]");
   const candidateNameInput = document.querySelector("[data-candidate-name-input]");
   const candidatePartyInput = document.querySelector("[data-candidate-party-input]");
+  const candidateAgendaInput = document.querySelector("[data-candidate-agenda-input]");
   const message = document.querySelector("[data-admin-message]");
 
   if (table) {
@@ -490,8 +534,9 @@ function attachAdmin() {
     const addCandidate = () => {
       const name = candidateNameInput.value.trim();
       const party = candidatePartyInput.value.trim();
+      const agenda = parseAgendaInput(candidateAgendaInput ? candidateAgendaInput.value : "");
 
-      const validationError = validateCandidateInput(name, party);
+      const validationError = validateCandidateInput(name, party, agenda);
       if (validationError) {
         showMessage(message, "error", validationError);
         candidateNameInput.setCustomValidity(validationError);
@@ -500,9 +545,12 @@ function attachAdmin() {
       }
 
       candidateNameInput.setCustomValidity("");
-      sessionState.adminCandidates.push({ name, party });
+      sessionState.adminCandidates.push({ name, party, agenda });
       candidateNameInput.value = "";
       candidatePartyInput.value = "";
+      if (candidateAgendaInput) {
+        candidateAgendaInput.value = "";
+      }
       renderCandidateBuilder();
       showMessage(message, "success", "Candidate added to the election list.");
       candidateNameInput.focus();
@@ -521,6 +569,14 @@ function attachAdmin() {
         addCandidate();
       }
     });
+    if (candidateAgendaInput) {
+      candidateAgendaInput.addEventListener("keydown", (event) => {
+        if ((event.metaKey || event.ctrlKey) && event.key === "Enter") {
+          event.preventDefault();
+          addCandidate();
+        }
+      });
+    }
   }
 
   if (candidateList) {

@@ -103,6 +103,15 @@ img {
   box-shadow: var(--shadow);
 }
 
+.brand-mark svg {
+  width: 1.3rem;
+  height: 1.3rem;
+}
+
+.brand-name {
+  font-size: 1.15rem;
+}
+
 .nav-links {
   display: flex;
   align-items: center;
@@ -264,6 +273,11 @@ img {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: var(--space-3);
+}
+
+.agenda-input textarea {
+  resize: vertical;
+  min-height: 6.5rem;
 }
 
 .input-stack label {
@@ -449,7 +463,7 @@ button:disabled {
 }
 
 .candidate-grid {
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
 }
 
 .card {
@@ -466,6 +480,41 @@ button:disabled {
 .party {
   color: var(--text-soft);
   font-weight: 600;
+}
+
+.agenda-block {
+  margin-top: var(--space-3);
+  padding: 0.95rem 1rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: linear-gradient(180deg, #ffffff, var(--surface-soft));
+}
+
+.agenda-title {
+  display: block;
+  margin-bottom: 0.55rem;
+  letter-spacing: -0.02em;
+}
+
+.agenda-list,
+.agenda-preview {
+  margin: 0;
+  padding-left: 1.15rem;
+  display: grid;
+  gap: 0.45rem;
+  color: var(--text-soft);
+  line-height: 1.45;
+}
+
+.agenda-more {
+  color: var(--primary);
+  font-weight: 700;
+  list-style: none;
+  margin-left: -1.15rem;
+}
+
+.agenda-empty {
+  margin: 0;
 }
 
 .vote-state {
@@ -501,6 +550,15 @@ button:disabled {
 
 .candidate-admin-item p {
   margin: 0.2rem 0 0;
+}
+
+.agenda-preview {
+  margin-top: 0.65rem;
+  font-size: 0.95rem;
+}
+
+.agenda-preview li {
+  overflow-wrap: anywhere;
 }
 
 .transaction-box strong,

@@ -11,12 +11,22 @@
       <header class="navbar">
         <div class="container nav-inner">
           <a class="brand" href="dashboard.html">
-            <span class="brand-mark">BV</span>
-            <span>Blockchain Voting System</span>
+            <span class="brand-mark" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none">
+                <path
+                  d="M20 6L9 17l-5-5"
+                  stroke="currentColor"
+                  stroke-width="2.5"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
+            </span>
+            <span class="brand-name">BlockVote</span>
           </a>
           <div class="nav-meta">
             <nav class="nav-links">
-              <a href="dashboard.html" data-nav="dashboard">Home</a>
+              <a href="dashboard.html" data-nav="dashboard">Dashboard</a>
               <a href="voting.html" data-nav="vote">Vote</a>
               <a href="results.html" data-nav="results">Results</a>
               <a href="admin.html" data-nav="admin" data-admin-link>Admin</a>
@@ -102,6 +112,16 @@
                       />
                     </label>
                   </div>
+                  <label class="agenda-input">
+                    Candidate Agenda (one point per line)
+                    <textarea
+                      name="candidateAgenda"
+                      rows="4"
+                      placeholder="Example:\n- Improve library hours\n- Better Wi‑Fi coverage\n- More scholarships"
+                      maxlength="1400"
+                      data-candidate-agenda-input
+                    ></textarea>
+                  </label>
                   <div class="button-row">
                     <button class="ghost-btn" type="button" data-add-candidate>Add Candidate</button>
                   </div>

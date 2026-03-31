@@ -7,7 +7,9 @@ const {
   LineRuleType,
   Packer,
   Paragraph,
+  SimpleField,
   Table,
+  TableOfContents,
   TableCell,
   TableRow,
   TextRun,
@@ -201,18 +203,38 @@ function buildDocFromMarkdown(markdown) {
   const lines = splitIntoLines(markdown);
   const children = [];
 
+  const isFenceStart = (value) => value.trimEnd().startsWith("```");
+  const isHr = (value) => value.trim() === "---";
+  const isHeading = (value) => {
+    const trimmed = value.trimStart();
+    return trimmed.startsWith("# ");
+  };
+  const isHeading2 = (value) => value.trimStart().startsWith("## ");
+  const isHeading3 = (value) => value.trimStart().startsWith("### ");
+  const isHeading4 = (value) => value.trimStart().startsWith("#### ");
+  const isBullet = (value) => value.trimStart().startsWith("- ");
+
+  const isStructuralStart = (value) =>
+    isFenceStart(value) ||
+    isHr(value) ||
+    isHeading(value) ||
+    isHeading2(value) ||
+    isHeading3(value) ||
+    isHeading4(value) ||
+    isBullet(value) ||
+    isTableLine(value.trim());
+
   let i = 0;
   while (i < lines.length) {
     const raw = lines[i];
     const line = raw.trimEnd();
 
     if (!line.trim()) {
-      children.push(new Paragraph({ text: "" }));
       i += 1;
       continue;
     }
 
-    if (line.startsWith("```")) {
+    if (isFenceStart(line)) {
       const fence = line;
       const fenceLang = fence.slice(3).trim();
       let code = "";
@@ -237,8 +259,7 @@ function buildDocFromMarkdown(markdown) {
       continue;
     }
 
-    if (line.startsWith("---")) {
-      children.push(new Paragraph({ text: "" }));
+    if (isHr(line)) {
       i += 1;
       continue;
     }
@@ -251,7 +272,41 @@ function buildDocFromMarkdown(markdown) {
       continue;
     }
 
-    if (line.startsWith("# ")) {
+    const figureCaptionMatch = line.trim().match(/^Figure:\\s*(.+)$/i);
+    if (figureCaptionMatch) {
+      children.push(
+        new Paragraph({
+          alignment: AlignmentType.CENTER,
+          style: "Caption",
+          children: [
+            new TextRun("Figure "),
+            new SimpleField("SEQ Figure \\* ARABIC"),
+            new TextRun(`: ${figureCaptionMatch[1].trim()}`)
+          ]
+        })
+      );
+      i += 1;
+      continue;
+    }
+
+    const tableCaptionMatch = line.trim().match(/^Table:\\s*(.+)$/i);
+    if (tableCaptionMatch) {
+      children.push(
+        new Paragraph({
+          alignment: AlignmentType.CENTER,
+          style: "Caption",
+          children: [
+            new TextRun("Table "),
+            new SimpleField("SEQ Table \\* ARABIC"),
+            new TextRun(`: ${tableCaptionMatch[1].trim()}`)
+          ]
+        })
+      );
+      i += 1;
+      continue;
+    }
+
+    if (isHeading(line)) {
       children.push(
         new Paragraph({
           alignment: AlignmentType.CENTER,
@@ -263,33 +318,70 @@ function buildDocFromMarkdown(markdown) {
       continue;
     }
 
-    if (line.startsWith("## ")) {
-      children.push(paragraphFromText(line.slice(3).trim(), { heading: HeadingLevel.HEADING_1 }));
+    if (isHeading2(line)) {
+      const headingText = line.slice(3).trim();
+      children.push(paragraphFromText(headingText, { heading: HeadingLevel.HEADING_1 }));
+
+      // Auto fields for Contents / List of Figures / List of Tables.
+      if (headingText.toLowerCase() === "contents") {
+        children.push(
+          new TableOfContents("Contents", {
+            hyperlink: true,
+            headingStyleRange: "1-2"
+          })
+        );
+      } else if (headingText.toUpperCase() === "LIST OF FIGURES") {
+        children.push(
+          new Paragraph({
+            children: [new SimpleField('TOC \\\\h \\\\z \\\\c \"Figure\"')]
+          })
+        );
+      } else if (headingText.toUpperCase() === "LIST OF TABLES") {
+        children.push(
+          new Paragraph({
+            children: [new SimpleField('TOC \\\\h \\\\z \\\\c \"Table\"')]
+          })
+        );
+      }
+
       i += 1;
       continue;
     }
 
-    if (line.startsWith("### ")) {
+    if (isHeading3(line)) {
       children.push(paragraphFromText(line.slice(4).trim(), { heading: HeadingLevel.HEADING_2 }));
       i += 1;
       continue;
     }
 
-    if (line.startsWith("#### ")) {
+    if (isHeading4(line)) {
       children.push(paragraphFromText(line.slice(5).trim(), { heading: HeadingLevel.HEADING_3 }));
       i += 1;
       continue;
     }
 
-    if (line.startsWith("- ")) {
+    if (isBullet(line)) {
       children.push(paragraphFromText(line.slice(2).trim(), { bullet: true }));
       i += 1;
       continue;
     }
 
-    // Keep numbered items as plain text (simple + stable in Word)
-    children.push(paragraphFromText(line));
+    // Join plain text lines into a single paragraph until a structural line or blank line appears.
+    let paragraphText = line.trim();
     i += 1;
+    while (i < lines.length) {
+      const nextLineRaw = lines[i];
+      const nextLine = nextLineRaw.trimEnd();
+      if (!nextLine.trim()) {
+        break;
+      }
+      if (isStructuralStart(nextLine)) {
+        break;
+      }
+      paragraphText += ` ${nextLine.trim()}`;
+      i += 1;
+    }
+    children.push(paragraphFromText(paragraphText));
   }
 
   return new Document({

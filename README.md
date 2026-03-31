@@ -9,7 +9,7 @@ This project is a final-year-project style hybrid voting system built with plain
 - Election creation and start/stop controls
 - One-vote-per-user enforcement
 - Public result summary page
-- MongoDB-backed persistent sessions
+- JWT-based sessions (stored in an HttpOnly cookie)
 - Stronger password hashing with `scrypt`
 - Real local blockchain transactions for election configuration, voting, and status changes
 
@@ -41,11 +41,12 @@ PORT=3000
 MONGODB_URI=mongodb://127.0.0.1:27017
 MONGODB_DB=blockchain_voting_system
 NODE_ENV=development
+JWT_SECRET=change-me
 BLOCKCHAIN_CHAIN_ID=1337
 BLOCKCHAIN_MNEMONIC=test test test test test test test test test test test junk
 ```
 
-`NODE_ENV=production` adds the `Secure` cookie flag for session cookies.
+`NODE_ENV=production` adds the `Secure` cookie flag for the auth cookie.
 
 ## Demo accounts
 

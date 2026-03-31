@@ -44,14 +44,16 @@ test("election validation requires a title and at least two candidates", () => {
   const payload = validateElectionInput({
     title: " Student Election 2026 ",
     candidates: [
-      { name: "Candidate One", party: "Union" },
-      { name: "Candidate Two", party: "Independent" }
+      { name: "Candidate One", party: "Union", agenda: ["More study spaces", "Better cafeteria options"] },
+      { name: "Candidate Two", party: "Independent", agenda: "Improve Wi-Fi\nMore events" }
     ]
   });
 
   assert.equal(payload.title, "Student Election 2026");
   assert.equal(payload.candidates.length, 2);
   assert.equal(payload.candidates[0].candidateId, 1);
+  assert.deepEqual(payload.candidates[0].agenda, ["More study spaces", "Better cafeteria options"]);
+  assert.deepEqual(payload.candidates[1].agenda, ["Improve Wi-Fi", "More events"]);
   assert.throws(() => validateElectionInput({ title: "Bad", candidates: [{ name: "Only One" }] }));
 });
 
