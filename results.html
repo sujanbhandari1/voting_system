@@ -40,10 +40,38 @@
       </header>
 
       <main class="container page">
-        <section class="hero">
-          <span class="tag">Election Results</span>
-          <h1>Transparent result summary</h1>
-          <p data-results-title>Current election</p>
+        <section class="hero hero-visual">
+          <div class="hero-copy">
+            <span class="tag">Election Results</span>
+            <h1>Transparent result summary</h1>
+            <p data-results-title>Current election</p>
+          </div>
+          <div class="hero-figure" aria-hidden="true">
+            <svg class="figure-illustration" viewBox="0 0 640 360" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <defs>
+                <linearGradient id="resg1" x1="0" y1="0" x2="1" y2="1">
+                  <stop offset="0" stop-color="#1f6feb" stop-opacity="0.92" />
+                  <stop offset="1" stop-color="#1f9d7a" stop-opacity="0.92" />
+                </linearGradient>
+                <linearGradient id="resg2" x1="0" y1="1" x2="1" y2="0">
+                  <stop offset="0" stop-color="#1f6feb" stop-opacity="0.12" />
+                  <stop offset="1" stop-color="#1f9d7a" stop-opacity="0.12" />
+                </linearGradient>
+              </defs>
+              <rect x="44" y="48" width="552" height="264" rx="28" fill="url(#resg2)" />
+              <rect x="132" y="230" width="70" height="54" rx="16" fill="url(#resg1)" opacity="0.18" />
+              <rect x="232" y="196" width="70" height="88" rx="16" fill="url(#resg1)" opacity="0.22" />
+              <rect x="332" y="156" width="70" height="128" rx="16" fill="url(#resg1)" opacity="0.28" />
+              <rect x="432" y="120" width="70" height="164" rx="16" fill="url(#resg1)" opacity="0.34" />
+              <path
+                d="M132 204h370"
+                stroke="url(#resg1)"
+                stroke-width="10"
+                stroke-linecap="round"
+                opacity="0.55"
+              />
+            </svg>
+          </div>
         </section>
 
         <div class="message warning" data-results-message hidden>Results are currently unavailable.</div>

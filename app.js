@@ -47,6 +47,15 @@ function showMessage(target, type, text) {
   target.hidden = false;
 }
 
+function emptyState(title, description) {
+  return `
+    <div class="empty-state">
+      <strong>${title}</strong>
+      <p class="muted">${description}</p>
+    </div>
+  `;
+}
+
 function formatStatusClass(status) {
   if (status === "Approved" || status === "Active") {
     return "status-approved";
@@ -109,6 +118,11 @@ function renderDashboard(data) {
     return;
   }
 
+  const dashboardMessage = document.querySelector("[data-dashboard-message]");
+  if (dashboardMessage) {
+    dashboardMessage.hidden = true;
+  }
+
   welcome.textContent = `Welcome, ${data.user.name}`;
 
   const status = document.querySelector("[data-user-status]");
@@ -116,10 +130,24 @@ function renderDashboard(data) {
   status.className = `status-pill ${formatStatusClass(data.user.status)}`;
 
   const title = document.querySelector("[data-election-title]");
-  title.textContent = data.election.title;
+  const election = data.election || {};
+  const candidates = Array.isArray(election.candidates) ? election.candidates : [];
+
+  if (!election.title) {
+    if (title) {
+      title.textContent = "No election created yet.";
+    }
+    showMessage(
+      dashboardMessage,
+      "warning",
+      "No election is available yet. Ask the admin to create an election before voting can begin."
+    );
+  } else if (title) {
+    title.textContent = election.title;
+  }
 
   const voteAction = document.querySelector("[data-vote-action]");
-  const canVote = data.user.status === "Approved" && data.election.active;
+  const canVote = data.user.status === "Approved" && Boolean(election.active) && candidates.length > 0;
   voteAction.classList.toggle("is-disabled", !canVote);
   voteAction.href = canVote ? "voting.html" : "#";
   voteAction.setAttribute("aria-disabled", String(!canVote));
@@ -129,16 +157,16 @@ function renderDashboard(data) {
   const voteState = document.querySelector("[data-vote-status]");
   const resultsAction = document.querySelector("[data-results-action]");
   if (totalCandidates) {
-    totalCandidates.textContent = String(data.election.candidates.length);
+    totalCandidates.textContent = election.title ? String(candidates.length) : "-";
   }
   if (totalVotes) {
-    totalVotes.textContent = String(data.results.totalVotes);
+    totalVotes.textContent = election.title ? String(data.results?.totalVotes ?? 0) : "-";
   }
   if (voteState) {
-    voteState.textContent = data.election.active ? "Open" : "Closed";
+    voteState.textContent = election.title ? (election.active ? "Open" : "Closed") : "-";
   }
   if (resultsAction) {
-    const canSeeResults = data.election.resultsVisibleToVoters || data.user.role === "admin";
+    const canSeeResults = Boolean(election.title) && (election.resultsVisibleToVoters || data.user.role === "admin");
     resultsAction.classList.toggle("is-disabled", !canSeeResults);
     resultsAction.href = canSeeResults ? "results.html" : "#";
     resultsAction.setAttribute("aria-disabled", String(!canSeeResults));
@@ -184,27 +212,42 @@ function renderVoting(data) {
     return;
   }
 
-  document.querySelector("[data-election-state]").textContent = data.election.active
-    ? "Voting is currently open."
-    : "Voting is currently closed.";
-
-  list.innerHTML = data.election.candidates
-    .map((candidate) => candidateCard(candidate, !data.canVote))
-    .join("");
-
+  const electionState = document.querySelector("[data-election-state]");
   const banner = document.querySelector("[data-vote-banner]");
+  const hash = document.querySelector("[data-hash]");
+
+  const election = data.election || {};
+  const candidates = Array.isArray(election.candidates) ? election.candidates : [];
+
+  if (electionState) {
+    electionState.textContent = election.active ? "Voting is currently open." : "Voting is currently closed.";
+  }
+
+  if (candidates.length === 0) {
+    list.innerHTML = emptyState(
+      "No candidates available",
+      "An admin needs to create an election and add candidates before voting can start."
+    );
+  } else {
+    list.innerHTML = candidates.map((candidate) => candidateCard(candidate, !data.canVote)).join("");
+  }
+
   if (data.hasVoted) {
     showMessage(banner, "success", "You have already voted.");
-  } else if (!data.election.active) {
+  } else if (!election.active) {
     showMessage(banner, "warning", "Voting has not started yet or has already ended.");
+  } else if (candidates.length === 0) {
+    showMessage(banner, "warning", "No candidates are available yet.");
   } else if (data.user.status !== "Approved") {
     showMessage(banner, "error", "Your account is pending approval. You cannot vote yet.");
   } else {
     showMessage(banner, "warning", "Select one candidate to cast your vote.");
   }
 
-  document.querySelector("[data-hash]").textContent =
-    data.transactionHash || "A real blockchain transaction hash will appear here after the vote is recorded.";
+  if (hash) {
+    hash.textContent =
+      data.transactionHash || "A real blockchain transaction hash will appear here after the vote is recorded.";
+  }
 }
 
 function renderResults(data) {
@@ -214,14 +257,32 @@ function renderResults(data) {
   }
 
   const message = document.querySelector("[data-results-message]");
-  if (message) {
-    message.hidden = true;
+  if (message) message.hidden = true;
+
+  const election = data.election || {};
+  const candidates = Array.isArray(election.candidates) ? election.candidates : [];
+
+  const title = document.querySelector("[data-results-title]");
+  const totalVotesNode = document.querySelector("[data-total-votes]");
+
+  if (title) {
+    title.textContent = election.title || "Results";
+  }
+  if (totalVotesNode) {
+    totalVotesNode.textContent = String(data.totalVotes ?? 0);
   }
 
-  document.querySelector("[data-results-title]").textContent = data.election.title;
-  document.querySelector("[data-total-votes]").textContent = String(data.totalVotes);
+  if (candidates.length === 0) {
+    list.innerHTML = emptyState("No election data yet", "Results will appear after an admin creates an election.");
+    showMessage(message, "warning", "No election candidates are available to display.");
+    return;
+  }
 
-  list.innerHTML = data.election.candidates
+  if ((data.totalVotes ?? 0) === 0) {
+    showMessage(message, "warning", "No votes have been cast yet.");
+  }
+
+  list.innerHTML = candidates
     .map((candidate) => {
       const percentage = data.totalVotes === 0 ? 0 : Math.round((candidate.votes / data.totalVotes) * 100);
       return `
@@ -242,6 +303,17 @@ function renderResults(data) {
 function renderAdminUsers(users) {
   const table = document.querySelector("[data-user-table]");
   if (!table) {
+    return;
+  }
+
+  if (!Array.isArray(users) || users.length === 0) {
+    table.innerHTML = `
+      <tr>
+        <td colspan="5">
+          ${emptyState("No registered users yet", "New registrations will show up here once users sign up.")}
+        </td>
+      </tr>
+    `;
     return;
   }
 
@@ -267,22 +339,26 @@ function renderAdminUsers(users) {
 }
 
 function renderAdminElection(election) {
-  document.querySelector("[data-admin-election-title]").textContent = election.title;
+  const safeElection = election || {};
+  const candidates = Array.isArray(safeElection.candidates) ? safeElection.candidates : [];
+  document.querySelector("[data-admin-election-title]").textContent = safeElection.title || "No election created yet";
   const status = document.querySelector("[data-admin-election-status]");
-  status.textContent = election.active ? "Active" : "Closed";
-  status.className = `status-pill ${formatStatusClass(election.active ? "Active" : "Closed")}`;
+  status.textContent = safeElection.active ? "Active" : "Closed";
+  status.className = `status-pill ${formatStatusClass(safeElection.active ? "Active" : "Closed")}`;
   const resultsStatus = document.querySelector("[data-results-visibility-status]");
   if (resultsStatus) {
-    resultsStatus.textContent = election.resultsVisibleToVoters ? "Visible to voters" : "Hidden from voters";
-    resultsStatus.className = `status-pill ${formatStatusClass(election.resultsVisibleToVoters ? "Approved" : "Pending")}`;
+    resultsStatus.textContent = safeElection.resultsVisibleToVoters ? "Visible to voters" : "Hidden from voters";
+    resultsStatus.className = `status-pill ${formatStatusClass(safeElection.resultsVisibleToVoters ? "Approved" : "Pending")}`;
   }
-  document.querySelector("[data-candidate-preview]").textContent = election.candidates
-    .map((candidate) => `${candidate.name}${candidate.party ? ` (${candidate.party})` : ""}`)
-    .join(", ");
-  document.querySelector("[data-toggle-election]").textContent = election.active ? "End Voting" : "Start Voting";
+  document.querySelector("[data-candidate-preview]").textContent = candidates.length
+    ? candidates.map((candidate) => `${candidate.name}${candidate.party ? ` (${candidate.party})` : ""}`).join(", ")
+    : "No candidates configured yet.";
+  document.querySelector("[data-toggle-election]").textContent = safeElection.active ? "End Voting" : "Start Voting";
   const visibilityButton = document.querySelector("[data-toggle-results-visibility]");
   if (visibilityButton) {
-    visibilityButton.textContent = election.resultsVisibleToVoters ? "Hide Results from Voters" : "Show Results to Voters";
+    visibilityButton.textContent = safeElection.resultsVisibleToVoters
+      ? "Hide Results from Voters"
+      : "Show Results to Voters";
   }
 }
 
@@ -689,8 +765,16 @@ async function bootstrapPage() {
       window.location.href = "admin.html";
       return;
     }
-    const payload = await api("/api/dashboard");
-    renderDashboard(payload);
+    try {
+      const payload = await api("/api/dashboard");
+      renderDashboard(payload);
+    } catch (error) {
+      showMessage(
+        document.querySelector("[data-dashboard-message]"),
+        "error",
+        error.message || "Unable to load dashboard data."
+      );
+    }
     return;
   }
 
@@ -699,9 +783,17 @@ async function bootstrapPage() {
       redirectToHome();
       return;
     }
-    const payload = await api("/api/election");
-    renderVoting(payload);
-    attachVoting();
+    try {
+      const payload = await api("/api/election");
+      renderVoting(payload);
+      attachVoting();
+    } catch (error) {
+      const list = document.querySelector("[data-candidate-list]");
+      if (list) {
+        list.innerHTML = emptyState("Unable to load candidates", "Please refresh the page or try again later.");
+      }
+      showMessage(document.querySelector("[data-vote-banner]"), "error", error.message);
+    }
     return;
   }
 
@@ -738,8 +830,16 @@ async function bootstrapPage() {
       window.location.href = "dashboard.html";
       return;
     }
-    await loadAdminData();
-    attachAdmin();
+    try {
+      await loadAdminData();
+      attachAdmin();
+    } catch (error) {
+      showMessage(
+        document.querySelector("[data-admin-message]"),
+        "error",
+        error.message || "Unable to load admin data."
+      );
+    }
   }
 }
 

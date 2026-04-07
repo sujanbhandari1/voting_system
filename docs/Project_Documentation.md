@@ -14,7 +14,7 @@ This project is a prototype of a **Blockchain Transparent Voting System** design
 
 The system uses a hybrid design:
 
-- **MongoDB (Database):** stores users, login sessions, election backup data, and vote records.
+- **MongoDB (Database):** stores users, election backup data, and vote records.
 - **Local Blockchain (Ganache EVM):** runs on the same machine and behaves like an Ethereum network for demonstration.
 - **Solidity Smart Contract:** stores election configuration and vote counts. It also produces a real transaction hash for each important action (create election, start/stop election, vote).
 
@@ -167,7 +167,7 @@ The scope does not include:
 
 This project is important for learning and demonstration because:
 
-- it shows how to build real login/session functionality in a secure way (password hashing + sessions)
+- it shows how to build real login and secure persistence (password hashing + HttpOnly JWT cookie)
 - it shows how database rules (indexes) can enforce integrity like unique voting
 - it demonstrates blockchain integration in a simple way using Ganache and a smart contract
 - it provides a complete end-to-end flow that can be shown in a presentation (register → approve → vote → transaction hash → results)
@@ -282,7 +282,7 @@ The gap is that users and evaluators want a complete system that demonstrates bo
 
 This project fills that gap by building a full flow:
 
-- MongoDB stores users and sessions (practical requirement)
+- MongoDB stores users, election backup data, and vote records (practical requirement)
 - a smart contract stores election state and vote counts (transparency demonstration)
 - the UI displays transaction hashes and results in readable form
 
@@ -316,7 +316,7 @@ Table: Functional Requirements
 |---|---|
 | FR-1 | Voter can register with name, email, and password |
 | FR-2 | Admin can approve/reject/pending a voter |
-| FR-3 | User can login/logout using sessions |
+| FR-3 | User can login/logout using an auth cookie (JWT) |
 | FR-4 | Admin can create/update election title and candidates |
 | FR-5 | Admin can start/stop voting |
 | FR-6 | Approved voter can vote exactly once |
@@ -334,7 +334,7 @@ Table: Non-Functional Requirements
 
 | Category | Requirement |
 |---|---|
-| Security | Password hashing, role checks, HttpOnly session cookie |
+| Security | Password hashing, role checks, HttpOnly JWT cookie |
 | Reliability | Unique indexes prevent duplicate email and duplicate vote |
 | Usability | Simple pages, clear messages, readable results |
 | Maintainability | Code split into auth/validation/blockchain modules |
@@ -353,37 +353,20 @@ This section explains how the system is designed. The goal is to make the design
 
 Figure: System Architecture (Client–Server–DB–Blockchain)
 
-```mermaid
-flowchart LR
-  U["User Browser (HTML/CSS/JS)"] -->|HTTP JSON| S["Node.js Server"]
-  S -->|MongoDB Driver| M["MongoDB"]
-  S -->|Ethers.js| G["Ganache (Local EVM)"]
-  G --> C["Solidity Smart Contract"]
-  S --> U
-```
+![System Architecture (Client–Server–DB–Blockchain)](figures/image3-system-architecture.svg)
 
 **Explanation (Architecture):**
 
 - The browser loads HTML/CSS/JS pages from the server.
 - The browser calls API endpoints (JSON).
-- The server validates inputs and checks session/user status.
-- MongoDB stores users, sessions, elections backup, and votes.
+- The server validates inputs and checks auth/user status.
+- MongoDB stores users, elections backup, and votes.
 - Ganache provides a local blockchain network.
 - The Solidity smart contract stores election state and vote counts.
 
 Figure: Use Case Diagram (Voter/Admin)
 
-```mermaid
-flowchart TB
-  V["Voter"] --> R["Register"]
-  V --> L["Login"]
-  V --> D["View Dashboard"]
-  V --> VT["Vote"]
-  V --> RS["View Results"]
-  A["Admin"] --> AU["Approve Users"]
-  A --> CE["Create/Update Election"]
-  A --> TS["Start/Stop Voting"]
-```
+![Use Case Diagram (Voter/Admin)](figures/image4-use-case-diagram.svg)
 
 **Database design (MongoDB collections):**
 
@@ -392,7 +375,6 @@ Table: Database Collections (Schema Summary)
 | Collection | Purpose |
 |---|---|
 | `users` | Store admin/voter accounts and approval status |
-| `sessions` | Store login sessions with expiry |
 | `elections` | Store election backup data (title, active, candidates) |
 | `votes` | Store who voted, for which candidate, and tx hash |
 
@@ -428,52 +410,9 @@ Table: Votes Collection Fields
 | `transactionHash` | String | Blockchain tx hash after voting |
 | `createdAt` | String | ISO timestamp |
 
-Table: Sessions Collection Fields
-
-| Field | Type | Notes |
-|---|---|---|
-| `sessionId` | String | Random session id |
-| `userId` | Number | Linked user |
-| `createdAt` | String | ISO timestamp |
-| `expiresAt` | Date | Expiry time (TTL index) |
-
 Figure: ER Diagram (MongoDB Collections)
 
-```mermaid
-erDiagram
-  USERS ||--o{ SESSIONS : has
-  USERS ||--o{ VOTES : casts
-  ELECTIONS ||--o{ VOTES : receives
-
-  USERS {
-    int userId
-    string name
-    string email
-    string passwordHash
-    string role
-    string status
-  }
-
-  SESSIONS {
-    string sessionId
-    int userId
-    datetime expiresAt
-  }
-
-  ELECTIONS {
-    int electionId
-    string title
-    bool active
-    array candidates
-  }
-
-  VOTES {
-    int electionId
-    int userId
-    int candidateId
-    string transactionHash
-  }
-```
+![ER Diagram (MongoDB Collections)](figures/image6-er-diagram.svg)
 
 **Blockchain smart contract design (simple explanation):**
 
@@ -496,7 +435,7 @@ Table: API Endpoints Summary
 | Method | Endpoint | Role | Purpose |
 |---|---|---|---|
 | POST | `/api/register` | Guest | Register voter |
-| POST | `/api/login` | Guest | Login + create session |
+| POST | `/api/login` | Guest | Login + set auth JWT cookie |
 | POST | `/api/logout` | User | Logout |
 | GET | `/api/dashboard` | User | Dashboard data |
 | GET | `/api/election` | User | Election + eligibility |
@@ -544,8 +483,6 @@ Table: Database Indexes (Integrity Rules)
 | `users` | unique `email` | Prevent duplicate accounts |
 | `users` | unique `userId` | Stable user identity |
 | `votes` | unique (`electionId`, `userId`) | Prevent double voting in DB |
-| `sessions` | unique `sessionId` | Prevent session collisions |
-| `sessions` | TTL `expiresAt` | Auto delete expired sessions |
 
 **Error handling design (simple and clear):**
 
@@ -566,31 +503,15 @@ Table: Error Handling and Status Codes
 
 **Session design (explained):**
 
-After login, the system creates a random `sessionId` and stores it in MongoDB with an expiry time. The browser stores the session id in an **HttpOnly cookie**. On each request, the server reads the cookie and checks the session in MongoDB. This approach is simple and secure for a prototype because:
+After login, the server signs a **JWT** and stores it in an **HttpOnly cookie** (`btvs_jwt`). On each request, the server verifies the JWT and loads the user from MongoDB. This approach is simple for a prototype because:
 
-- the session token is not stored in local storage
+- the token is not stored in local storage
 - the token cannot be read by JavaScript due to HttpOnly
-- expired sessions are removed automatically by TTL
+- the token automatically expires (server-configured)
 
-Figure: Sequence Diagram (Login + Session)
+Figure: Sequence Diagram (Interaction Flow)
 
-```mermaid
-sequenceDiagram
-  participant Browser as Browser
-  participant Server as Node Server
-  participant DB as MongoDB
-
-  Browser->>Server: POST /api/login {email,password}
-  Server->>DB: Find user by email
-  DB-->>Server: user document
-  Server->>Server: Verify password hash
-  Server->>DB: Insert session {sessionId,userId,expiresAt}
-  Server-->>Browser: 200 + Set-Cookie btvs_sid
-  Browser->>Server: GET /api/session
-  Server->>DB: Find session by sessionId
-  DB-->>Server: session + user
-  Server-->>Browser: 200 {user}
-```
+![Sequence Diagram (Interaction Flow)](figures/image7-sequence-diagram.svg)
 
 **Election lifecycle design (explained):**
 
@@ -605,39 +526,16 @@ This flow is simple for demonstration and matches the UI pages in the project.
 
 Figure: Context DFD (High-Level Data Flow)
 
-```mermaid
-flowchart TD
-  V["Voter"] -->|Register / Login / Vote| S["Voting System"]
-  A["Admin"] -->|Approve / Create Election / Toggle Voting| S
-  S --> DB["MongoDB"]
-  S --> BC["Blockchain Contract (Ganache)"]
-  S -->|Results| V
-```
+![Dataflow Diagram / DFD (High-Level)](figures/image5-dfd.svg)
 
 **Voting flow (sequence):**
 
-Figure: Sequence Diagram (Cast Vote Flow)
-
-```mermaid
-sequenceDiagram
-  participant Browser as Browser
-  participant Server as Node Server
-  participant DB as MongoDB
-  participant Chain as Blockchain Contract
-
-  Browser->>Server: POST /api/vote {candidateId}
-  Server->>DB: Check session + user status
-  Server->>DB: Check existing vote (unique)
-  Server->>Chain: castVote(userId,candidateId)
-  Chain-->>Server: receipt (transaction hash)
-  Server->>DB: Insert vote record with hash
-  Server-->>Browser: Success + transaction hash
-```
+The sequence diagram above covers the cast vote flow, including the blockchain transaction hash returned to the client.
 
 **Security design (simple):**
 
 - Passwords are stored as hashes, not plain text.
-- Sessions are stored in DB and referenced by HttpOnly cookie.
+- Auth is stored as an HttpOnly JWT cookie (token verified on each request).
 - Admin routes require admin role.
 - DB has unique index to block duplicate voting.
 - Smart contract also blocks repeated voting for a voter id.
@@ -659,6 +557,22 @@ This UI design reduces confusion because the user always sees:
 - whether voting is open or closed
 - a clear message if they cannot vote
 
+### 3.3.6 Wireframes (Mobile UI Mockups)
+
+The following are low-fidelity mobile wireframes to show the main screens used in the demo.
+
+![Wireframe — Login](figures/image8-wireframe-login.svg)
+
+![Wireframe — Register](figures/image9-wireframe-register.svg)
+
+![Wireframe — Dashboard](figures/image10-wireframe-dashboard.svg)
+
+![Wireframe — Voting](figures/image11-wireframe-voting.svg)
+
+![Wireframe — Results](figures/image12-wireframe-results.svg)
+
+![Wireframe — Admin](figures/image13-wireframe-admin.svg)
+
 **Authentication methodology (password hashing):**
 
 The system does not store plain passwords. Instead, it stores a hash.
@@ -673,17 +587,17 @@ Why scrypt is used:
 
 **Session methodology (secure login persistence):**
 
-After login, the server creates a session record in MongoDB and sets a cookie:
+After login, the server sets a signed JWT in an HttpOnly cookie:
 
-- Cookie name: `btvs_sid`
+- Cookie name: `btvs_jwt`
 - Flags: HttpOnly, SameSite=Lax, Path=/
-- Expiry: limited time (TTL)
+- Expiry: limited time (JWT expiry)
 
 Why this is important:
 
 - HttpOnly prevents JavaScript from reading the token.
-- TTL expiry limits long-term risk.
-- Server-side sessions allow invalidation on logout.
+- Token expiry limits long-term risk.
+- Logout clears the auth cookie.
 
 **Election management methodology (admin controlled):**
 
@@ -817,7 +731,7 @@ stateDiagram-v2
 
 - User registers → `users` created with Pending Approval
 - Admin approves → user status becomes Approved
-- User logs in → `sessions` created and cookie set
+- User logs in → `btvs_jwt` cookie is set
 - User votes → blockchain vote recorded + `votes` inserted
 - Results page reads counts and shows them
 
@@ -849,7 +763,7 @@ Example Agile iteration flow for this project:
 
 1. Build basic UI pages and server route handling.
 2. Add MongoDB connection and collections.
-3. Add registration + login + sessions.
+3. Add registration + login + JWT auth cookie.
 4. Add admin approval workflow.
 5. Add election create/update and toggle.
 6. Add voting and results.
@@ -882,7 +796,7 @@ Table: Product Backlog (High Level)
 |---:|---|
 | 1 | Basic UI pages and navigation |
 | 2 | Registration API + validation |
-| 3 | Login/logout + sessions |
+| 3 | Login/logout + JWT auth cookie |
 | 4 | Admin users list + approval actions |
 | 5 | Election create/update + candidate handling |
 | 6 | Voting API with one-vote rule |
@@ -954,8 +868,8 @@ Example sprint backlog (Sprint 2: Auth + Admin approval):
 | Task | Estimate | Notes |
 |---|---:|---|
 | Registration API + validation | 5 | Handle duplicate email |
-| Login + sessions | 5 | HttpOnly cookie + TTL |
-| Logout | 2 | Clear cookie and delete session |
+| Login + JWT cookie | 5 | HttpOnly cookie + expiry |
+| Logout | 2 | Clear auth cookie |
 | Admin users list | 3 | Display all users |
 | Approve/reject endpoint | 3 | Update status values |
 | UI wiring in `app.js` | 5 | Show messages and tables |
@@ -977,7 +891,7 @@ Table: Module Breakdown
 | Module | Files | Responsibilities |
 |---|---|---|
 | Server + Routing | `server.js` | Serve UI files and handle API endpoints |
-| Authentication | `lib/auth.js` | Password hashing/verification, session id creation |
+| Authentication | `lib/auth.js` | Password hashing and verification |
 | Validation | `lib/validation.js` | Validate inputs and enforce basic rules |
 | Blockchain | `lib/blockchain.js`, `contracts/TransparentVoting.sol` | Deploy contract, configure election, cast vote |
 | Frontend UI | `index.html`, `register.html`, `dashboard.html`, `voting.html`, `results.html`, `admin.html`, `app.js`, `styles.css` | User interface and API calls |
@@ -985,7 +899,7 @@ Table: Module Breakdown
 Module explanation (simple):
 
 - **Server + Routing:** This is the main entry point. It receives requests, reads cookies, checks user role, validates inputs, and sends JSON responses. It also serves static HTML/CSS/JS files so the system can be run as a single application.
-- **Authentication:** This module handles password hashing using scrypt and safe verification during login. It also generates random session ids. This is important because authentication is a security foundation of the system.
+- **Authentication:** This module handles password hashing using scrypt and safe verification during login. This is important because authentication is a security foundation of the system.
 - **Validation:** All important inputs are validated in one place. This avoids repeated validation logic and reduces bugs. Validation also protects the system from invalid data and weak values.
 - **Blockchain:** This module compiles the Solidity contract, deploys it to Ganache, and provides simple functions like configure election, toggle election, and cast vote. Keeping blockchain logic in one module makes the server code cleaner.
 - **Frontend UI:** The UI pages show forms, tables, and results in a simple way. The JavaScript file calls APIs and updates the page based on the JSON responses.
@@ -1028,6 +942,8 @@ Platform notes (for local demo):
 This makes the demo setup simple: after installing dependencies and running the server, the system becomes ready for use.
 
 ### 4.4 Project Timeline (Gantt Chart)
+
+![Gantt Chart (Project Timeline)](figures/image14-gantt-chart.svg)
 
 Table: Project Timeline (Simple Gantt)
 
@@ -1133,7 +1049,7 @@ This project is a prototype for demonstration and learning. In real elections, t
 - **Local blockchain only:** The blockchain network is Ganache running locally. It is not distributed across many independent computers. This means it does not fully represent real blockchain decentralization. It is used because it is stable, fast, and easy for demo.
 - **Trusted admin/server:** In this prototype, the server (admin account) calls the contract functions. This is simple and avoids wallet complexity for students, but it also means the admin/server still has high control. In real blockchain voting, voters would usually cast their own transactions.
 - **Privacy not fully solved:** The system focuses on transparent counting, not strong privacy. In real voting, the system should not allow anyone (even admin) to know who voted for which candidate. That requires advanced cryptography and careful design.
-- **Limited security hardening:** The project includes password hashing, sessions, and validation. However, stronger protections like rate limiting, CSRF protection, account lockout, and detailed monitoring are not fully implemented. These would be required for real deployment.
+- **Limited security hardening:** The project includes password hashing, JWT auth cookie, and validation. However, stronger protections like rate limiting, CSRF protection, account lockout, and detailed monitoring are not fully implemented. These would be required for real deployment.
 - **Small scale design:** The system is designed for small elections (college/class). A large election would need load balancing, stronger database scaling, better performance engineering, and more operational controls.
 
 These limitations are acceptable for a final-year project prototype, but they should be clearly mentioned during presentation to avoid misunderstanding about real-world readiness.
@@ -1146,13 +1062,13 @@ These limitations are acceptable for a final-year project prototype, but they sh
 
 This project developed a working prototype of a **Blockchain Transparent Voting System** using a hybrid approach:
 
-- MongoDB stores users, sessions, election backup data, and vote records.
+- MongoDB stores users, election backup data, and vote records.
 - A Solidity smart contract on a local Ganache blockchain stores election configuration and vote counts, and produces transaction hashes for transparency demonstration.
 
 The system supports:
 
 - registration and admin approval
-- login/logout with sessions
+- login/logout with an HttpOnly JWT cookie
 - election creation and start/stop voting
 - one-time voting with transaction hash output
 - results display

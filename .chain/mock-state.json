@@ -1,0 +1,35 @@
+{
+  "mode": "mock",
+  "address": "0x1111111111111111111111111111111111111111",
+  "chainId": 1337,
+  "electionTitle": "votge 3",
+  "electionActive": true,
+  "electionNonce": 1,
+  "candidates": [
+    {
+      "candidateId": 1,
+      "name": "sujan",
+      "party": "sindi",
+      "votes": 0
+    },
+    {
+      "candidateId": 2,
+      "name": "skjhdada",
+      "party": "dasdasda",
+      "votes": 0
+    },
+    {
+      "candidateId": 3,
+      "name": "sdad",
+      "party": "dasdas",
+      "votes": 0
+    },
+    {
+      "candidateId": 4,
+      "name": "sdasda",
+      "party": "dada",
+      "votes": 0
+    }
+  ],
+  "votedElectionByUser": {}
+}
