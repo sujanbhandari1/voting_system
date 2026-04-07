@@ -40,42 +40,95 @@
       </header>
 
       <main class="container form-page">
-        <section class="form-card">
-          <div class="form-stack">
-            <span class="tag">College Final Year Project</span>
-            <h1>Secure and transparent student voting</h1>
-            <p class="form-hint">
-              Login to access the blockchain-based election dashboard and cast your vote after approval.
-            </p>
-          </div>
+        <section class="form-card auth-card">
+          <div class="auth-grid">
+            <aside class="auth-aside">
+              <span class="tag">College Final Year Project</span>
+              <h1>Secure and transparent student voting</h1>
+              <p class="form-hint">
+                Login to access the blockchain-based election dashboard and cast your vote after approval.
+              </p>
+              <div class="auth-figure" aria-hidden="true">
+                <svg class="figure-illustration" viewBox="0 0 640 360" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <defs>
+                    <linearGradient id="g1" x1="0" y1="0" x2="1" y2="1">
+                      <stop offset="0" stop-color="#1f6feb" stop-opacity="0.9" />
+                      <stop offset="1" stop-color="#1f9d7a" stop-opacity="0.9" />
+                    </linearGradient>
+                    <linearGradient id="g2" x1="0" y1="1" x2="1" y2="0">
+                      <stop offset="0" stop-color="#1f6feb" stop-opacity="0.14" />
+                      <stop offset="1" stop-color="#1f9d7a" stop-opacity="0.14" />
+                    </linearGradient>
+                  </defs>
+                  <rect x="44" y="48" width="552" height="264" rx="28" fill="url(#g2)" />
+                  <path
+                    d="M160 140c34-42 88-62 132-40 28 14 47 42 53 74 8 42 36 86 92 86 54 0 94-44 94-98"
+                    stroke="url(#g1)"
+                    stroke-width="10"
+                    stroke-linecap="round"
+                  />
+                  <circle cx="160" cy="140" r="18" fill="url(#g1)" />
+                  <circle cx="345" cy="178" r="18" fill="url(#g1)" />
+                  <circle cx="531" cy="162" r="18" fill="url(#g1)" />
+                  <path
+                    d="M304 96l16 10 16-10v20c0 34-18 64-32 76-14-12-32-42-32-76V96l16 10z"
+                    fill="url(#g1)"
+                    opacity="0.9"
+                  />
+                  <path
+                    d="M304 104v10c0 26 12 48 16 56 4-8 16-30 16-56v-10l-16 10-16-10z"
+                    fill="#ffffff"
+                    opacity="0.55"
+                  />
+                </svg>
+              </div>
+              <div class="hero-points" aria-hidden="true">
+                <div>
+                  <strong>End-to-end clarity</strong>
+                  <p class="muted">A clean flow for registration, approval, voting, and result visibility.</p>
+                </div>
+                <div>
+                  <strong>Presentation ready</strong>
+                  <p class="muted">Modern UI components designed for an academic demo and project viva.</p>
+                </div>
+              </div>
+            </aside>
 
-          <form class="form-stack" data-login-form>
-            <div class="input-stack">
-              <label>
-                Email
-                <input type="email" name="email" placeholder="student@college.edu" required />
-              </label>
-              <label>
-                Password
-                <input type="password" name="password" placeholder="Enter your password" required />
-              </label>
+            <div class="auth-main">
+              <div class="section-head">
+                <h2>Login</h2>
+                <p>Use your student credentials to continue.</p>
+              </div>
+
+              <form class="form-stack" data-login-form>
+                <div class="input-stack">
+                  <label>
+                    Email
+                    <input type="email" name="email" placeholder="student@college.edu" required />
+                  </label>
+                  <label>
+                    Password
+                    <input type="password" name="password" placeholder="Enter your password" required />
+                  </label>
+                </div>
+
+                <button class="primary-btn" type="submit">Login</button>
+              </form>
+
+              <div class="message error" data-login-message hidden>Login failed.</div>
+
+              <div class="note-box">
+                <strong>Demo Credentials</strong>
+                <p class="muted">Admin: `admin@college.edu` / `admin123`</p>
+                <p class="muted">Student: `student@college.edu` / `student123`</p>
+              </div>
+
+              <p class="muted">
+                New voter?
+                <a class="inline-link" href="register.html">Create an account</a>
+              </p>
             </div>
-
-            <button class="primary-btn" type="submit">Login</button>
-          </form>
-
-          <div class="message error" data-login-message hidden>Login failed.</div>
-
-          <div class="note-box">
-            <strong>Demo Credentials</strong>
-            <p class="muted">Admin: `admin@college.edu` / `admin123`</p>
-            <p class="muted">Student: `student@college.edu` / `student123`</p>
           </div>
-
-          <p class="muted">
-            New voter?
-            <a class="inline-link" href="register.html">Create an account</a>
-          </p>
         </section>
       </main>
     </div>

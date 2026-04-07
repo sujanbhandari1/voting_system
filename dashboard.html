@@ -40,42 +40,79 @@
       </header>
 
       <main class="container page">
-        <section class="hero">
-          <span class="tag">User Dashboard</span>
-          <div class="hero-grid">
-            <div class="panel hero-card">
-              <h1 data-welcome>Welcome</h1>
-              <p class="status-copy">
-                Monitor your approval status, access the current election, and review transparent voting results.
-              </p>
-              <div class="status-block">
-                <span class="muted">Account Status</span>
-                <span class="status-pill" data-user-status>Pending Approval</span>
-              </div>
-              <div class="button-row">
-                <a class="button primary-btn" href="voting.html" data-vote-action>Go to Vote</a>
-                <a class="button secondary-btn" href="results.html" data-results-action>View Results</a>
-              </div>
-            </div>
+        <section class="hero hero-visual">
+          <div class="hero-copy">
+            <span class="tag">User Dashboard</span>
+            <h1 data-welcome>Welcome</h1>
+            <p class="status-copy">
+              Monitor your approval status, access the current election, and review transparent voting results.
+            </p>
+          </div>
+          <div class="hero-figure" aria-hidden="true">
+            <svg class="figure-illustration" viewBox="0 0 640 360" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <defs>
+                <linearGradient id="dg1" x1="0" y1="0" x2="1" y2="1">
+                  <stop offset="0" stop-color="#1f6feb" stop-opacity="0.92" />
+                  <stop offset="1" stop-color="#1f9d7a" stop-opacity="0.92" />
+                </linearGradient>
+                <linearGradient id="dg2" x1="0" y1="1" x2="1" y2="0">
+                  <stop offset="0" stop-color="#1f6feb" stop-opacity="0.12" />
+                  <stop offset="1" stop-color="#1f9d7a" stop-opacity="0.12" />
+                </linearGradient>
+              </defs>
+              <rect x="44" y="48" width="552" height="264" rx="28" fill="url(#dg2)" />
+              <rect x="118" y="112" width="168" height="150" rx="22" fill="url(#dg1)" opacity="0.14" />
+              <rect x="306" y="112" width="216" height="72" rx="22" fill="url(#dg1)" opacity="0.14" />
+              <rect x="306" y="196" width="216" height="66" rx="22" fill="url(#dg1)" opacity="0.12" />
+              <path
+                d="M140 248v-40l24-18 22 22 44-52 38 30"
+                stroke="url(#dg1)"
+                stroke-width="10"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+              <circle cx="164" cy="190" r="10" fill="url(#dg1)" />
+              <circle cx="186" cy="212" r="10" fill="url(#dg1)" />
+              <circle cx="230" cy="160" r="10" fill="url(#dg1)" />
+            </svg>
+          </div>
+        </section>
 
-            <div class="panel">
-              <div class="section-head">
-                <h2>Election Overview</h2>
-                <p data-election-title>Current election title</p>
+        <div class="message warning" data-dashboard-message hidden></div>
+
+        <section class="dashboard-grid">
+          <div class="panel hero-card">
+            <div class="section-head">
+              <h2>Your Status</h2>
+              <p>Voting access depends on approval status and election activity.</p>
+            </div>
+            <div class="status-block">
+              <span class="muted">Account Status</span>
+              <span class="status-pill" data-user-status>Pending Approval</span>
+            </div>
+            <div class="button-row">
+              <a class="button primary-btn" href="voting.html" data-vote-action>Go to Vote</a>
+              <a class="button secondary-btn" href="results.html" data-results-action>View Results</a>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="section-head">
+              <h2>Election Overview</h2>
+              <p data-election-title>Current election title</p>
+            </div>
+            <div class="hero-points">
+              <div>
+                <strong>Transparent Ledger</strong>
+                <p class="muted">Each vote is intended to be recorded with a verifiable blockchain transaction reference.</p>
               </div>
-              <div class="hero-points">
-                <div>
-                  <strong>Transparent Ledger</strong>
-                  <p class="muted">Each vote is intended to be recorded with a verifiable blockchain transaction reference.</p>
-                </div>
-                <div>
-                  <strong>Approval-Based Access</strong>
-                  <p class="muted">Only approved students can enter the voting page and submit a ballot.</p>
-                </div>
-                <div>
-                  <strong>Simple Demo Flow</strong>
-                  <p class="muted">Designed for a clean academic presentation with clear actions and readable results.</p>
-                </div>
+              <div>
+                <strong>Approval-Based Access</strong>
+                <p class="muted">Only approved students can enter the voting page and submit a ballot.</p>
+              </div>
+              <div>
+                <strong>Simple Demo Flow</strong>
+                <p class="muted">Designed for a clean academic presentation with clear actions and readable results.</p>
               </div>
             </div>
           </div>
