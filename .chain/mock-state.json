@@ -3,7 +3,7 @@
   "address": "0x1111111111111111111111111111111111111111",
   "chainId": 1337,
   "electionTitle": "votge 3",
-  "electionActive": true,
+  "electionActive": false,
   "electionNonce": 1,
   "candidates": [
     {
