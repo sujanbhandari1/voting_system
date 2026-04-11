@@ -5,7 +5,8 @@
   "description": "Simple backend and frontend prototype for a blockchain-based transparent voting system",
   "scripts": {
     "start": "node server.js",
-    "test": "node --test"
+    "test": "node --test",
+    "generate:viva-pdf": "node scripts/generate-viva-pdf.js"
   },
   "dependencies": {
     "docx": "^9.6.1",
@@ -13,6 +14,7 @@
     "ganache": "^7.9.2",
     "jsonwebtoken": "^9.0.2",
     "mongodb": "^6.17.0",
+    "pdfkit": "^0.17.2",
     "solc": "^0.8.30"
   }
 }
