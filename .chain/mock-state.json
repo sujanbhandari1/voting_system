@@ -1,0 +1,33 @@
+{
+  "mode": "mock",
+  "address": "0x1111111111111111111111111111111111111111",
+  "chainId": 1337,
+  "electionTitle": "College Student Council Election 2026",
+  "electionActive": true,
+  "electionNonce": 1,
+  "candidates": [
+    {
+      "candidateId": 1,
+      "name": "Aarushi Sharma",
+      "party": "Progressive Student Union",
+      "votes": 1
+    },
+    {
+      "candidateId": 2,
+      "name": "Rohan Karki",
+      "party": "Campus Reform Group",
+      "votes": 1
+    },
+    {
+      "candidateId": 3,
+      "name": "Sanjana Thapa",
+      "party": "Independent",
+      "votes": 1
+    }
+  ],
+  "votedElectionByUser": {
+    "2": 1,
+    "4": 1,
+    "5": 1
+  }
+}
